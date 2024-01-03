@@ -1,4 +1,4 @@
-# Go Rest API
+# GO Rest API
 
 ## Rest API written in GO.
 
