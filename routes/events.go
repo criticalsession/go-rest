@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/criticalsession/go-rest/models"
-	"github.com/criticalsession/go-rest/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -36,20 +35,10 @@ func getEvent(ctx *gin.Context) {
 }
 
 func createEvent(ctx *gin.Context) {
-	token := ctx.Request.Header.Get("Authorization")
-	if token == "" {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized"})
-		return
-	}
-
-	userId, err := utils.VerifyToken(token)
-	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized", "error": err.Error()})
-		return
-	}
+	userId := ctx.GetUint("userId")
 
 	var event models.Event
-	err = ctx.ShouldBindJSON(&event)
+	err := ctx.ShouldBindJSON(&event)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data", "error": err.Error()})
 		return
