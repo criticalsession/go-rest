@@ -1,6 +1,8 @@
 package models
 
 import (
+	"errors"
+
 	"github.com/criticalsession/go-rest/db"
 	"github.com/criticalsession/go-rest/utils"
 )
@@ -38,5 +40,22 @@ func (u *User) Save() error {
 	}
 
 	u.Id = uint(id)
+	return nil
+}
+
+func (u *User) ValidateCredentials() error {
+	query := "SELECT id, password FROM users WHERE email = ?"
+	row := db.DB.QueryRow(query, u.Email)
+
+	var retrievedPassword string
+	err := row.Scan(&u.Id, &retrievedPassword)
+	if err != nil {
+		return err
+	}
+
+	if !utils.ComparePassword(u.Password, retrievedPassword) {
+		return errors.New("invalid credentials")
+	}
+
 	return nil
 }

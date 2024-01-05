@@ -2,4 +2,4 @@
 
 ## Rest API written in GO.
 
-More info coming soon.
+Create, update and delete events. Sign up and login users. Authenticate with JWT.
