@@ -29,7 +29,7 @@ func createTables() {
 		CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			email VARCHAR(255) NOT NULL UNIQUE,
-			password VARCHAR(255) NOT NULL,
+			password VARCHAR(255) NOT NULL
 		)
 	`
 
@@ -46,7 +46,7 @@ func createTables() {
 			description TEXT NOT NULL,
 			location VARCHAR(255) NOT NULL,
 			date_time DATETIME NOT NULL,
-			user_id INTEGER NOT NULL
+			user_id INTEGER NOT NULL,
 			FOREIGN KEY (user_id) REFERENCES users(id)
 		)
 	`
