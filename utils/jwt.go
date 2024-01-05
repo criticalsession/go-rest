@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -16,4 +17,31 @@ func GenerateToken(email string, userId uint) (string, error) {
 	})
 
 	return token.SignedString([]byte(secretKey))
+}
+
+func VerifyToken(token string) (uint, error) {
+	parsedToken, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
+		_, ok := t.Method.(*jwt.SigningMethodHMAC)
+		if !ok {
+			return nil, errors.New("unexpected signing method")
+		}
+
+		return []byte(secretKey), nil
+	})
+	if err != nil {
+		return 0, errors.New("could not parse token")
+	}
+
+	if !parsedToken.Valid {
+		return 0, errors.New("token is invalid")
+	}
+
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return 0, errors.New("invalid token claims")
+	}
+
+	userId := uint(claims["userId"].(float64))
+
+	return userId, nil
 }

@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/criticalsession/go-rest/models"
+	"github.com/criticalsession/go-rest/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,13 +36,26 @@ func getEvent(ctx *gin.Context) {
 }
 
 func createEvent(ctx *gin.Context) {
-	var event models.Event
-	err := ctx.ShouldBindJSON(&event)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data", "error": err.Error()})
+	token := ctx.Request.Header.Get("Authorization")
+	if token == "" {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized"})
+		return
 	}
 
-	event.UserId = 1
+	userId, err := utils.VerifyToken(token)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized", "error": err.Error()})
+		return
+	}
+
+	var event models.Event
+	err = ctx.ShouldBindJSON(&event)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data", "error": err.Error()})
+		return
+	}
+
+	event.UserId = userId
 	err = event.Save()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "Could not create event", "error": err.Error()})
@@ -72,6 +86,7 @@ func updateEvent(ctx *gin.Context) {
 	err = ctx.ShouldBindJSON(&updatedEvent)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data", "error": err.Error()})
+		return
 	}
 	updatedEvent.Id = uint(id)
 
@@ -103,6 +118,7 @@ func deleteEvent(ctx *gin.Context) {
 	err = e.Delete()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "Could not delete event", "error": err.Error()})
+		return
 	}
 
 	ctx.JSON(http.StatusCreated,
