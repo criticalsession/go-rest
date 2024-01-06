@@ -28,6 +28,8 @@ func registerForEvent(ctx *gin.Context) {
 		return
 	}
 
+	ev.Registrations = append(ev.Registrations, models.Registration{EventId: uint(eventId), UserId: userId})
+
 	ctx.JSON(http.StatusCreated,
 		gin.H{
 			"message": "User registered to event",
@@ -56,6 +58,14 @@ func unregisterFromEvent(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "Could not unregister user to event", "error": err.Error()})
 		return
 	}
+
+	registrations := []models.Registration{}
+	for _, r := range ev.Registrations {
+		if r.UserId != userId {
+			registrations = append(registrations, r)
+		}
+	}
+	ev.Registrations = registrations
 
 	ctx.JSON(http.StatusCreated,
 		gin.H{
