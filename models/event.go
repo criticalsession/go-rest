@@ -7,12 +7,13 @@ import (
 )
 
 type Event struct {
-	Id          uint
-	Name        string    `binding:"required"`
-	Description string    `binding:"required"`
-	Location    string    `binding:"required"`
-	DateTime    time.Time `binding:"required"`
-	UserId      uint
+	Id            uint
+	Name          string    `binding:"required"`
+	Description   string    `binding:"required"`
+	Location      string    `binding:"required"`
+	DateTime      time.Time `binding:"required"`
+	UserId        uint
+	Registrations []Registration
 }
 
 var events = []Event{}
@@ -61,6 +62,11 @@ func GetAllEvents() ([]Event, error) {
 			return nil, err
 		}
 
+		e.Registrations, err = e.GetRegistrations()
+		if err != nil {
+			return nil, err
+		}
+
 		events = append(events, e)
 	}
 
@@ -73,6 +79,11 @@ func GetEventById(id uint) (*Event, error) {
 
 	var e Event
 	err := row.Scan(&e.Id, &e.Name, &e.Description, &e.Location, &e.DateTime, &e.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	e.Registrations, err = e.GetRegistrations()
 	if err != nil {
 		return nil, err
 	}
@@ -106,4 +117,43 @@ func (e *Event) Delete() error {
 
 	_, err = stmt.Exec(e.Id)
 	return err
+}
+
+func (e *Event) Register(userId uint) error {
+	query := "INSERT INTO registrations (event_id, user_id) VALUES (?, ?)"
+	stmt, err := db.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(e.Id, userId)
+	return err
+}
+
+func (e *Event) Unregister(userId uint) error {
+	query := "DELETE FROM registrations WHERE event_id = ? AND user_id = ?"
+	_, err := db.DB.Exec(query, e.Id, userId)
+	return err
+}
+
+func (e *Event) GetRegistrations() ([]Registration, error) {
+	query := "SELECT id,event_id, user_id FROM registrations WHERE event_id = ?"
+	registrations := []Registration{}
+	rows, err := db.DB.Query(query, e.Id)
+	if err != nil {
+		return []Registration{}, err
+	}
+
+	for rows.Next() {
+		r := Registration{}
+		err := rows.Scan(&r.Id, &r.EventId, &r.UserId)
+		if err != nil {
+			return []Registration{}, err
+		}
+
+		registrations = append(registrations, r)
+	}
+
+	return registrations, nil
 }
